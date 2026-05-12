@@ -1,7 +1,30 @@
-<h1>Väder för {{ city }}</h1>
-<p>Temperatur: {{ weather.temperature }} °C</p>
-<p>Vindhastighet: {{ weather.windspeed }} m/s</p>
-<p>Väder: {{ weather.description }}.</p>
-<p>Luftfuktighet: {{ weather.humidity }}%</p>
-<p>Luftkvalitet: {{ weather.AQI }}.</p>
-<a href="/">Tillbaka</a>
+
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <title>Väderapp | {{ city }}</title>
+</head>
+<body>
+    {% if error %}
+        <h1>Fel</h1>
+        <p>{{ error }}</p>
+        <a href="/">Tillbaka</a>
+    {% else %}
+
+        <h1>Väder för {{ city }}, {{ country }} {{ weather.weather_emoji }}</h1>
+
+        <p>Temperatur: {{ weather.temperature }} °C</p>
+        <p>Upplevd temperatur: {{ weather.apparent_temperature }} °C</p>
+        <p>Luftfuktighet: {{ weather.humidity }}%</p>
+        <p>Nederbörd just nu: {{ weather.precipitation }} mm</p>
+        <p>Nederbörd idag: {{ weather.precipitation_today }} mm</p>
+        <p>Molntäcke: {{ weather.cloud_cover }}%</p>
+        <p>Vindhastighet: {{ weather.wind_speed }} m/s</p>
+        <p>Vindriktning: {{ weather.wind_direction }}°</p>
+        <p>Väder: {{ weather.weather_description }} (kod: {{ weather.weather_code }})</p>
+
+        <a href="/">Tillbaka</a>
+    {% endif %}
+</body>
+</html>
