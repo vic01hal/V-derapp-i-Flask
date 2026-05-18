@@ -1,0 +1,19 @@
+{
+    "users": [
+        {
+            "username": "Victor",
+            "favorites": [],
+            "search_history": []
+        },
+        {
+            "username": "marpet",
+            "favorites": [],
+            "search_history": []
+        },
+        {
+            "username": "Gabbe",
+            "favorites": [],
+            "search_history": []
+        }
+    ]
+}

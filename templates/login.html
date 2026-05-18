@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <title>Väderapp - Profil</title>
+</head>
+<body>
+    <h1>Välkommen!</h1>
+
+    {% if error %}
+        <p>{{ error }}</p>
+    {% endif %}
+
+    <h2>Skapa konto</h2>
+    <form action="/create_user" method="post">
+        <label for="username">Användarnamn:</label>
+        <input type="text" id="username" name="username" required>
+        <br>
+        <label for="username_confirm">Bekräfta:</label>
+        <input type="text" id="username_confirm" name="username_confirm" required>
+
+        <button type="submit">Skapa konto</button>
+    </form>
+
+    <h2>Logga in</h2>
+    <form action="/login" method="post">
+        <label for="login_username">Användarnamn:</label>
+        <input type="text" id="login_username" name="username" required>
+
+        <button type="submit">Logga in</button>
+    </form>
+</body>
+</html>

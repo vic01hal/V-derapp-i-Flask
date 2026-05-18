@@ -1,11 +1,16 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for, session
 import openmeteo_requests
 import requests_cache
 from retry_requests import retry
-import requests
+import os
+import json
 
 app = Flask(__name__)
+app.secret_key = "log_in"
 
+users_file = "users.json"
+
+#Cache jag snodde från Open Meteos hemsida, sparar sökningar i en timme
 cache_session = requests_cache.CachedSession(".cache", expire_after=3600)
 retry_session = retry(cache_session, retries=2, backoff_factor=0.2)
 openmeteo = openmeteo_requests.Client(session=retry_session)
@@ -25,6 +30,40 @@ current_variables = [
     "wind_direction_10m"
 ]
 
+
+
+def load_users():
+    if not os.path.exists(users_file):
+        return {"users": []}
+
+    with open(users_file, "r", encoding="utf-8") as file:
+        return json.load(file)
+
+
+def save_users(data):
+    with open(users_file, "w", encoding="utf-8") as file:
+        json.dump(data, file, ensure_ascii=False, indent=4)
+
+
+def user_exists(username):
+    data = load_users()
+    for user in data["users"]:
+        if user["username"].lower() == username.lower():
+            return True
+    return False
+
+
+def create_user(username):
+    data = load_users()
+
+    new_user = {
+        "username": username,
+        "favorites": [],
+        "search_history": []
+    }
+
+    data["users"].append(new_user)
+    save_users(data)
 
 def get_coordinates(city):
     params = {
@@ -50,7 +89,7 @@ def get_coordinates(city):
         "longitude": place["longitude"]
     }
 
-#Väderkod till emoji dict är gjord av ChatGPT, för jag orkade inte
+
 def weather_emoji(weather_code, is_day):
     weather_code = int(weather_code)
     is_day = int(is_day)
@@ -60,7 +99,8 @@ def weather_emoji(weather_code, is_day):
             return "☀️"
         else:
             return "🌙"
-
+        
+    #Väderkod -> emoji dict är gjord av ChatGPT, för jag orkade inte
     weather_emojis = {
         1: "🌤️",
         2: "⛅",
@@ -132,13 +172,61 @@ def get_weather(latitude, longitude):
     return weather_data
 
 
-@app.route("/")
-def home():
-    return render_template("index.html")
 
+@app.route("/")
+def start():
+    if "username" in session:
+        return redirect(url_for("home"))
+    return render_template("login.html")
+
+@app.route("/create_user", methods=["POST"])
+def create_new_user():
+    username = request.form.get("username", "").strip()
+    username_confirm = request.form.get("username_confirm", "").strip()
+
+    if not username or not username_confirm:
+        return render_template("login.html", error="Fyll i båda fälten.")
+
+    if username != username_confirm:
+        return render_template("login.html", error="Användarnamnen matchar inte.")
+
+    if user_exists(username):
+        return render_template("login.html", error="Användarnamnet finns redan.")
+
+    create_user(username)
+    session["username"] = username
+
+    return redirect(url_for("home"))
+
+@app.route("/login", methods=["POST"])
+def login():
+    username = request.form.get("username", "").strip()
+
+    if not username:
+        return render_template("login.html", error="Skriv in ett användarnamn.")
+
+    if not user_exists(username):
+        return render_template("login.html", error="Användarnamnet finns inte.")
+
+    session["username"] = username
+    return redirect(url_for("home"))
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("start"))
+
+@app.route("/weather")
+def home():
+    if "username" not in session:
+        return redirect(url_for("start"))
+    return render_template("index.html", username=session["username"])
 
 @app.route("/results", methods=["POST"])
 def results():
+    if "username" not in session:
+        return redirect(url_for("start"))
+
     city = request.form.get("city", "").strip()
 
     if not city:
@@ -165,7 +253,8 @@ def results():
             "results.html",
             error="Det gick inte att hämta väderdata just nu."
     )
-    
+
+
 def get_weather_description(weather_code, is_day):
     weather_code = int(weather_code)
 
